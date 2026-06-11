@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Salesforce Record Processor (LWC OSS)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- 1. Import official Salesforce SLDS styles to make the app look native -->
+    <link 
+        rel="stylesheet" 
+        href="https://cloudflare.com" 
+        integrity="sha512-Vq9XFmXpSWhSpxzO0V6fepvJvE37UOf88fD7S8zXAnXgGisbYidmcoS8N86Z2E3X+A0wOAn5+2lTf2MdfG86Sw==" 
+        crossorigin="anonymous" 
+        referrerpolicy="no-referrer" />
+
+    <!-- 2. Import the mandatory Salesforce Canvas SDK for iframe controls -->
+    <script type="text/javascript" src="https://salesforce.com"></script>
+
+    <style>
+        /* Fallback custom styles for our status messages inside LWC */
+        body {
+            padding: 1rem;
+            background-color: #f3f3f3;
+        }
+        .status-success {
+            margin-top: 1rem;
+            color: #2e7d32;
+            font-weight: bold;
+        }
+        .status-error {
+            margin-top: 1rem;
+            color: #d32f2f;
+            font-weight: bold;
+        }
+        /* Custom styles to mimic lightning cards and buttons using standard SLDS classes */
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border: 1px solid #dddbda;
+            border-radius: .25rem;
+            box-shadow: 0 2px 2px 0 rgba(0,0,0,0.1);
+            max-width: 450px;
+            margin: 0 auto;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 0.5rem;
+            margin: 0.5rem 0 1rem 0;
+            border: 1px solid #dddbda;
+            border-radius: .25rem;
+            background-color: #fff;
+        }
+        button {
+            background-color: #0176d3;
+            color: white;
+            border: 1px solid #0176d3;
+            padding: 0.5rem 1rem;
+            border-radius: .25rem;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: background-color 0.1s linear;
+        }
+        button:hover {
+            background-color: #014b87;
+        }
+        button:disabled {
+            background-color: #c9c7c5;
+            border-color: #c9c7c5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- The custom LWC Open Source HTML element tag where your app injects -->
+    <div class="slds-scope">
+        <my-canvas-record-upsert></my-canvas-record-upsert>
+    </div>
+
+    <!-- 3. Auto-resize the app frame inside Salesforce using Canvas SDK -->
+    <script type="text/javascript">
+        Sfdc.canvas(function() {
+            Sfdc.canvas.client.resize({ height: "400px" });
+        });
+    </script>
+
+    <!-- 4. Main entry point script bundled by lwc-services/webpack -->
+    <script src="/index.js"></script>
+</body>
+</html>
