@@ -1,16 +1,22 @@
 const express = require('express');
+const session = require('express-session');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 5183;
 const CONSUMER_SECRET = process.env.CANVAS_CONSUMER_SECRET;
+
+// Configure secure tracking sessions
+app.use(session({
+    secret: 'a-secure-random-local-string',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // Set to true if running on production https
+}));
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
-// Point Express to serve the compiled LWC production build bundle folder
 app.use(express.static(path.join(__dirname, 'dist')));
 
 function decodeSignedRequest(signedRequest, secret) {
@@ -23,32 +29,42 @@ function decodeSignedRequest(signedRequest, secret) {
     return JSON.parse(Buffer.from(payload, 'base64').toString('utf8'));
 }
 
-// Intercept Salesforce Canvas Signed Request
+// 1. Capture Signed Request and save tokens into the user's session
 app.post('/canvas', (req, res) => {
     const canvasContext = decodeSignedRequest(req.body.signed_request, CONSUMER_SECRET);
     if (!canvasContext) return res.status(401).send('Validation Failed.');
 
-    const oauthToken = canvasContext.client.oauthToken;
-    const instanceUrl = canvasContext.client.instanceUrl;
+    // Save tokens securely on the server side
+    req.session.sfToken = canvasContext.client.oauthToken;
+    req.session.sfInstance = canvasContext.client.instanceUrl;
 
-    // Redirect user to the compiled LWC frontend with security context tokens appended
-    res.redirect(`/?token=${encodeURIComponent(oauthToken)}&instance=${encodeURIComponent(instanceUrl)}`);
+    // Clean redirect: No messy, unsecure URL params passed to the frontend
+    res.redirect('/');
 });
 
-// Proxy route processing standard Salesforce REST data upserts
+// 2. Clear API Route: Pulls tokens directly from session memory
 app.post('/api/upsert-account', async (req, res) => {
-    const { accountName, token, instanceUrl } = req.body;
+    const { accountName } = req.body;
+    
+    // Retrieve authentication securely from session state
+    const token = req.session.sfToken;
+    const instanceUrl = req.session.sfInstance;
+
+    if (!token || !instanceUrl) {
+        return res.status(401).json({ success: false, error: 'Unauthorized: Salesforce Canvas context session expired.' });
+    }
+
     const targetUrl = `${instanceUrl}/services/data/v60.0/sobjects/Account/Name/${encodeURIComponent(accountName)}`;
 
     try {
         const response = await fetch(targetUrl, {
             method: 'PATCH',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ Description: "Processed seamlessly via independent LWC OSS container web application deployed on Render." })
+            body: JSON.stringify({ Description: "Processed securely via Node.js Server-Side Session Storage." })
         });
 
         if (response.status === 201 || response.status === 204) {
-            return res.json({ success: true, message: `Account "${accountName}" successfully updated via LWC Open Source!` });
+            return res.json({ success: true, message: `Account "${accountName}" successfully updated!` });
         }
         const errData = await response.json();
         return res.status(response.status).json({ success: false, errors: errData });
@@ -57,4 +73,4 @@ app.post('/api/upsert-account', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`LWC OSS App active on port ${PORT}`));
+app.listen(process.env.PORT || 5183);
