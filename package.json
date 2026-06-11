@@ -2,7 +2,7 @@
   "name": "lwc-oss-render-upsert",
   "version": "1.0.0",
   "scripts": {
-    "build": "lwc-services build",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider lwc-services build",
     "start": "node server.js"
   },
   "dependencies": {
