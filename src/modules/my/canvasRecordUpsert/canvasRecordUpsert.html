@@ -1,0 +1,23 @@
+<template>
+    <div class="card">
+        <h3>Salesforce Record Processor (LWC OSS)</h3>
+        <label for="accName">Enter Account Name to Upsert:</label>
+        
+        <!-- Standard HTML input replacing lightning-input -->
+        <input 
+            type="text" 
+            id="accName"
+            placeholder="e.g. Acme Crude Corporation..." 
+            value={accountName}
+            oninput={handleNameChange} />
+            
+        <!-- Standard HTML button replacing lightning-button -->
+        <button onclick={triggerSalesforceUpsert} disabled={isProcessing}>
+            Upsert Account Record
+        </button>
+        
+        <template if:true={statusMessage}>
+            <div class={statusClass}>{statusMessage}</div>
+        </template>
+    </div>
+</template>
